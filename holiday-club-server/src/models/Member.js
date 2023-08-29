@@ -2,13 +2,16 @@ const mongoose = require('mongoose');
 const slugify = require('slugify');
 const geocoder = require('../utils/geocoder');
 
-const taskSchema = new mongoose.Schema(
+const memberSchema = new mongoose.Schema(
 	{
-		task: {
+		firstname: {
 			type: String,
-			required: [true, 'Please add a task'],
-			maxlength: [150, 'Task name cannot be longer than 150 characters'],
-			unique: true,
+			required: [true, 'Please add a first name'],
+			trim: true,
+		},
+		surname: {
+			type: String,
+			required: [true, 'Please add a surname'],
 			trim: true,
 		},
 		slug: String,
@@ -79,13 +82,13 @@ const taskSchema = new mongoose.Schema(
 );
 
 // Create task slug from task name
-taskSchema.pre('save', function (next) {
+memberSchema.pre('save', function (next) {
 	this.slug = slugify(this.task, { lower: true });
 	next();
 });
 
 //Geocode & create location field
-taskSchema.pre('save', async function (next) {
+memberSchema.pre('save', async function (next) {
 	const loc = await geocoder.geocode(this.address);
 	this.location = {
 		type: 'Point',
@@ -103,6 +106,6 @@ taskSchema.pre('save', async function (next) {
 	next();
 });
 
-const Tasks = mongoose.model('Tasks', taskSchema, 'Tasks');
+const Member = mongoose.model('Member', taskSchema, 'Member');
 
-module.exports = Tasks;
+module.exports = Member;

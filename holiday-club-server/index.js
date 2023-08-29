@@ -13,7 +13,7 @@ const { xss } = require('express-xss-sanitizer');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 //Load env variables
-dotenv.config({ path: '../taskmanager-server/.env' });
+dotenv.config({ path: '../holidy-club-server/.env' });
 
 const connectDB = require('./src/config/db');
 //connect to the database
@@ -78,14 +78,14 @@ app.use(
 	})
 );
 //Route files
-const tasks = require('./src/routes/tasks');
+const members = require('./src/routes/members');
 const auth = require('./src/routes/auth');
 const users = require('./src/routes/users');
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api/taskman', tasks);
+app.use('/api/club', memebers);
 app.use('/api/auth', auth); //mount routers
 app.use('/api/users', users); //mount routers
 
