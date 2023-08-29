@@ -9,7 +9,7 @@ const {
 	createMember,
 	updateMember,
 	deleteMember,
-	taskPhotoUpload,
+	memberPhotoUpload,
 } = require('../controllers/members');
 
 const Member = require('../models/Member');

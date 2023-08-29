@@ -13,7 +13,7 @@ const { xss } = require('express-xss-sanitizer');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 //Load env variables
-dotenv.config({ path: '../holidy-club-server/.env' });
+dotenv.config({ path: '../holiday-club-server/.env' });
 
 const connectDB = require('./src/config/db');
 //connect to the database
@@ -85,7 +85,7 @@ const users = require('./src/routes/users');
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api/club', memebers);
+app.use('/api/club', members);
 app.use('/api/auth', auth); //mount routers
 app.use('/api/users', users); //mount routers
 

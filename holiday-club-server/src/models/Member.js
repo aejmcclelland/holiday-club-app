@@ -106,6 +106,6 @@ memberSchema.pre('save', async function (next) {
 	next();
 });
 
-const Member = mongoose.model('Member', taskSchema, 'Member');
+const Member = mongoose.model('Member', memberSchema, 'Member');
 
 module.exports = Member;
