@@ -8,11 +8,12 @@ const User = require('../models/User');
 //@route    POST /api/auth/register
 //@access   Public
 exports.register = asyncHandler(async (req, res, next) => {
-	const { name, email, password, role } = req.body;
+	const { firstname, surname, email, password, role } = req.body;
 
 	//Create user
 	const user = await User.create({
-		name,
+		firstname,
+		surname,
 		email,
 		password,
 		role,
@@ -77,8 +78,10 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 //@access   Private
 exports.updateDetails = asyncHandler(async (req, res, next) => {
 	const fieldsToUpdate = {
-		name: req.body.name,
+		firstname: req.body.firstname,
+		surname: req.body.surname,
 		email: req.body.email,
+		role: req.body.role,
 	};
 
 	const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
