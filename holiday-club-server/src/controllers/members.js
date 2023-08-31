@@ -3,8 +3,7 @@ const asyncHandler = require('../middleware/async');
 const slugify = require('slugify');
 const multer = require('multer');
 const Member = require('../models/Member');
-const { storage } = require('../cloudinary/index');
-const upload = multer({ storage: storage });
+const User = require('../models/User');
 
 //@desc     Get all tasks
 //@route    GET /api/taskman
@@ -20,13 +19,50 @@ exports.getMembers = asyncHandler(async (req, res, next) => {
 exports.getMember = asyncHandler(async (req, res, next) => {
 	const member = await Member.findById(req.params.id);
 
-	if (!member) {
+	if (member) {
+		//Check if the requesting udser is the parent or carer
+		if (
+			member.user.toString() === req.user.id ||
+			(member.carer && member.carer.toString() === req.user.id)
+		) {
+			// Check if the requesting user is an admin
+			if (req.user.role === 'admin') {
+				return res.status(200).json({ success: true, data: member });
+			}
+			// Check if the requesting user is the parent or carer of the child
+			if (
+				member &&
+				(member.user.toString() === req.user.id ||
+					member.carer.toString() === req.user.id)
+			) {
+				return res.status(200).json({ success: true, data: member });
+			}
+		} else {
+			//User is not authorised to access this member's details
+			return next(
+				new ErrorResponse(
+					`You are not authorised to access this member's details`,
+					401
+				)
+			);
+		}
+	} else {
+		// Member not found
 		return next(
-			new ErrorResponse(`Task not found with id of ${req.params.id}`, 404)
+			new ErrorResponse('You are not authorized to access this member', 404)
 		);
 	}
-	res.status(200).json({ success: true, data: member });
 });
+//@desc     Create new task
+//@route    GET /api/club/children
+//@access   Private
+exports.getChildren = asyncHandler(async (req, res, next) => {
+	// Find all members that belong to the current user (parent)
+	const children = await Member.find({ user: req.user.id });
+	console.log('children', children);
+	res.status(200).json({ success: true, data: children });
+});
+
 //@desc     Create new task
 //@route    POST /api/taskman
 //@access   Private
@@ -34,31 +70,19 @@ exports.createMember = asyncHandler(async (req, res, next) => {
 	//Add user to req.body
 	req.body.user = req.user.id;
 
-	const images = []; //store upload image URLs and filenames
-
-	// Images have already been uploaded and processed by multer and multer-storage-cloudinary
-	if (req.files) {
-		for (const file of req.files) {
-			images.push({
-				url: file.secure_url,
-				filename: file.originalname,
-			});
-		}
-	}
-
 	//Check for published task
 	const publishedMember = await Member.findOne({ user: req.user.id });
 
 	//if the user is not the publisher, they cannot view
-	if (publishedMember && req.user.role !== 'admin') {
-		return next(
-			new ErrorResponse(
-				`The user with ID ${req.user.id} has already published this task`,
-				400
-			)
-		);
-	}
-	const member = await Member.create({ ...req.body, images: images });
+	// if (publishedMember && req.user.role !== 'admin') {
+	// 	return next(
+	// 		new ErrorResponse(
+	// 			`The user with ID ${req.user.id} has already added this child`,
+	// 			400
+	// 		)
+	// 	);
+	// }
+	const member = await Member.create({ ...req.body });
 	res.status(201).json({ success: true, data: member });
 });
 
@@ -70,24 +94,34 @@ exports.updateMember = asyncHandler(async (req, res, next) => {
 
 	if (!member) {
 		return next(
-			new ErrorResponse(`Task not found with id of ${req.params.id}`, 404)
+			new ErrorResponse(`Member not found with id of ${req.params.id}`, 404)
 		);
 	}
-	//Make sure user is Task owner
-	if (member.user.toString() !== req.user.id && req.user.role !== 'admin') {
-		return next(
-			new ErrorResponse(
-				`User ${req.user.id} is not authorised to update this task`,
-				401
-			)
-		);
+	// Check if the requesting user is an admin
+	if (req.user.role === 'admin') {
+		// Allow access for admin
+		return res.status(200).json({ success: true, data: member });
 	}
 
+	// Check if the requesting user is the parent or carer of the child
+	if (
+		member &&
+		(member.user.toString() === req.user.id ||
+			member.carer.toString() === req.user.id)
+	)
+		if (member.user.toString() !== req.user.id && req.user.role !== 'admin') {
+			//Make sure user is Task owner
+			return next(
+				new ErrorResponse(
+					`User ${req.user.id} is not authorised to update this task`,
+					401
+				)
+			);
+		}
 	//update slug when updating name
-	if (Object.keys(req.body).includes('name')) {
+	if (Object.keys(req.body).includes('fullName')) {
 		req.body.slug = slugify(req.body.name, { lower: true });
 	}
-
 	member = await Member.findByIdAndUpdate(req.params.id, req.body, {
 		new: true,
 		runValidators: true,

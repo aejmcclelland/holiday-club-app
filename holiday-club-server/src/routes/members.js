@@ -9,7 +9,7 @@ const {
 	createMember,
 	updateMember,
 	deleteMember,
-	memberPhotoUpload,
+	getChildren,
 } = require('../controllers/members');
 
 const Member = require('../models/Member');
@@ -20,23 +20,25 @@ const advancedResults = require('../middleware/advancedresults');
 const { protect, authorise } = require('../middleware/auth');
 
 router
-	.route('/:id/photo')
-	.put(protect, authorise('admin'), memberPhotoUpload)
-	.post(protect, authorise('admin'), memberPhotoUpload);
+	.route('/children')
+	.get(
+		protect,
+		authorise('parent', 'grandparent', 'carer', 'admin'),
+		getChildren
+	);
 
 router
 	.route('/')
-	.get(advancedResults(Member), getMembers)
+	.get(protect, authorise('admin'), advancedResults(Member), getMembers)
 	.post(
 		protect,
 		authorise('parent', 'grandparent', 'carer', 'admin'),
-		upload.array('images'),
 		createMember
 	);
 
 router
 	.route('/:id')
-	.get(getMember)
+	.get(protect, authorise('parent', 'grandparent', 'carer', 'admin'), getMember)
 	.put(
 		protect,
 		authorise('parent', 'grandparent', 'carer', 'admin'),
