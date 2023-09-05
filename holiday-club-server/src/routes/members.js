@@ -15,18 +15,26 @@ const router = express.Router();
 
 const advancedResults = require('../middleware/advancedresults');
 const { protect, authorise } = require('../middleware/auth');
+const { checkActivityAccess } = require('../middleware/yourMiddlewareFile');
 
 router
 	.route('/children')
 	.get(
 		protect,
 		authorise('parent', 'grandparent', 'carer', 'admin'),
+		checkActivityAccess('Sunday School', 'HBC', 'Connect', 'Senior Leader'),
 		getChildren
 	);
 
 router
 	.route('/')
-	.get(protect, authorise('admin'), advancedResults(Member), getMembers)
+	.get(
+		protect,
+		authorise('admin'),
+		advancedResults(Member),
+		checkActivityAccess('Sunday School', 'HBC', 'Connect', 'Senior Leader'),
+		getMembers
+	)
 	.post(
 		protect,
 		authorise('parent', 'grandparent', 'carer', 'admin'),
@@ -35,9 +43,15 @@ router
 
 router
 	.route('/:id')
-	.get(protect, authorise('parent', 'grandparent', 'carer', 'admin'), getMember)
+	.get(
+		protect,
+		authorise('parent', 'grandparent', 'carer', 'admin'),
+		checkActivityAccess('Sunday School', 'HBC', 'Connect', 'Senior Leader'),
+		getMember
+	)
 	.put(
 		protect,
+		checkActivityAccess('Sunday School', 'HBC', 'Connect', 'Senior Leader'),
 		authorise('parent', 'grandparent', 'carer', 'admin'),
 		updateMember
 	)

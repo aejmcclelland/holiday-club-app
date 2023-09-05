@@ -12,6 +12,7 @@ const LeaderSchema = new mongoose.Schema({
 		type: String,
 		required: [true, 'Please add a surname'],
 	},
+	slug: String,
 	email: {
 		type: String,
 		required: [true, 'Please add an email'],
@@ -23,7 +24,7 @@ const LeaderSchema = new mongoose.Schema({
 	},
 	role: {
 		type: String,
-		enum: ['Group Leader', 'Senior Leader', 'Junior Leader'],
+		enum: ['Sunday School', 'HBC', 'Connect', 'Senior Leader'],
 		default: 'Senior Leader',
 	},
 	password: {
@@ -38,6 +39,12 @@ const LeaderSchema = new mongoose.Schema({
 		type: Date,
 		default: Date.now,
 	},
+});
+// Create task slug from task name
+LeaderSchema.pre('save', function (next) {
+	const fullName = `${this.firstname} ${this.surname}`;
+	this.slug = slugify(fullName, { lower: true });
+	next();
 });
 
 // Encrypt password using bcrypt

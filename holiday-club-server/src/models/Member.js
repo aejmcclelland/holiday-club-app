@@ -27,6 +27,14 @@ const memberSchema = new mongoose.Schema(
 		address: {
 			type: String,
 		},
+		activity: {
+			type: String,
+			enum: ['HBC', 'Sunday School', 'Connect'],
+		},
+		permission: {
+			type: Boolean,
+			default: false, //default to false
+		},
 		// location: {
 		// 	// GeoJSON Point
 		// 	type: {
