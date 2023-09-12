@@ -8,7 +8,14 @@ const User = require('../models/User');
 //@route    POST /api/auth/register
 //@access   Public
 exports.register = asyncHandler(async (req, res, next) => {
-	const { firstname, surname, email, password, role } = req.body;
+	const { firstname, surname, email, password, role, activity } = req.body;
+
+	// Check if the user role is 'parent' and they're trying to set 'role' to 'leader' or 'admin'
+	if (role !== 'parent' && ['leader', 'admin'].includes(role)) {
+		return next(
+			new ErrorResponse("Parents can't register as leaders or admins", 403)
+		);
+	}
 
 	//Create user
 	const user = await User.create({
@@ -17,10 +24,38 @@ exports.register = asyncHandler(async (req, res, next) => {
 		email,
 		password,
 		role,
+		activity,
 	});
 
 	sendTokenResponse(user, 200, res);
 });
+
+//@desc     Register a user as an admin
+//@route    POST /api/auth/register/admin
+//@access   Private (only accessible to admins)
+exports.registerAdmin = asyncHandler(async (req, res, next) => {
+	const { firstname, surname, email, password, role, activity } = req.body;
+  
+	// Check if the user is an admin
+	if (req.user.role !== 'admin') {
+	  return next(
+		new ErrorResponse('Only admins can access this route', 403)
+	  );
+	}
+  
+	// Create user as an admin
+	const user = await User.create({
+	  firstname,
+	  surname,
+	  email,
+	  password,
+	  role,
+	  activity,
+	});
+  
+	sendTokenResponse(user, 200, res);
+  });
+  
 
 //@desc     login user
 //@route    POST /api/auth/login
@@ -82,6 +117,7 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
 		surname: req.body.surname,
 		email: req.body.email,
 		role: req.body.role,
+		activity: req.body.activity,
 	};
 
 	const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {

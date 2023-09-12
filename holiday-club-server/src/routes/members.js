@@ -7,6 +7,7 @@ const {
 	updateMember,
 	deleteMember,
 	getChildren,
+	getChild,
 } = require('../controllers/members');
 
 const Member = require('../models/Member');
@@ -15,50 +16,31 @@ const router = express.Router();
 
 const advancedResults = require('../middleware/advancedresults');
 const { protect, authorise } = require('../middleware/auth');
-const { checkActivityAccess } = require('../middleware/yourMiddlewareFile');
-
-router
-	.route('/children')
-	.get(
-		protect,
-		authorise('parent', 'grandparent', 'carer', 'admin'),
-		checkActivityAccess('Sunday School', 'HBC', 'Connect', 'Senior Leader'),
-		getChildren
-	);
 
 router
 	.route('/')
-	.get(
-		protect,
-		authorise('admin'),
-		advancedResults(Member),
-		checkActivityAccess('Sunday School', 'HBC', 'Connect', 'Senior Leader'),
-		getMembers
-	)
-	.post(
-		protect,
-		authorise('parent', 'grandparent', 'carer', 'admin'),
-		createMember
-	);
+	.get(protect, authorise('admin'), advancedResults(Member), getMembers)
+	.post(protect, authorise('parent', 'admin'), createMember);
 
 router
 	.route('/:id')
+	.get(protect, authorise('parent', 'admin'), getMember)
+	.put(protect, authorise('parent', 'admin'), updateMember)
+	.delete(protect, authorise('parent', 'admin'), deleteMember);
+
+router
+	.route('/:activity/:id')
 	.get(
 		protect,
-		authorise('parent', 'grandparent', 'carer', 'admin'),
-		checkActivityAccess('Sunday School', 'HBC', 'Connect', 'Senior Leader'),
-		getMember
-	)
-	.put(
+		authorise('parent', 'admin', 'HBC', 'Sunday School', 'Connect'),
+		getChild
+	);
+router
+	.route('/:activity')
+	.get(
 		protect,
-		checkActivityAccess('Sunday School', 'HBC', 'Connect', 'Senior Leader'),
-		authorise('parent', 'grandparent', 'carer', 'admin'),
-		updateMember
-	)
-	.delete(
-		protect,
-		authorise('parent', 'grandparent', 'carer', 'admin'),
-		deleteMember
+		authorise('admin', 'HBC', 'Sunday School', 'Connect'),
+		getChildren
 	);
 
 module.exports = router;

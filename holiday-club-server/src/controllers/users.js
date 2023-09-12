@@ -25,6 +25,18 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 //@route    POST /api/auth/users
 //@access   Private/Admin
 exports.createUser = asyncHandler(async (req, res, next) => {
+	const { role } = req.body;
+
+	// Check if the role is "leader"
+	if (role === 'leader') {
+		// Check if the authenticated user has the "admin" role
+		if (req.user.role !== 'admin') {
+			return next(
+				new ErrorResponse('Only admin users can create leader users', 403)
+			);
+		}
+	}
+
 	const user = await User.create(req.body);
 
 	res.status(201).json({

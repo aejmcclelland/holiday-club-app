@@ -23,8 +23,13 @@ const UserSchema = new mongoose.Schema({
 	},
 	role: {
 		type: String,
-		enum: ['parent', 'grandparent', 'carer', 'guardian'],
+		enum: ['parent', 'leader', 'carer', 'guardian', 'admin'],
 		default: 'parent',
+	},
+	activity: {
+		type: String,
+		enum: ['HBC', 'Sunday School', 'Connect'],
+		default: 'HBC',
 	},
 	password: {
 		type: String,
@@ -60,7 +65,7 @@ UserSchema.pre('findOneAndUpdate', async function (next) {
 
 //Sign JWT and return
 UserSchema.methods.getSignedJwtToken = function () {
-	return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+	return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, {
 		expiresIn: process.env.JWT_EXPIRE,
 	});
 };
