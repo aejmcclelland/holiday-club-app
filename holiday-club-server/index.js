@@ -8,6 +8,8 @@ const mongoSanitize = require('express-mongo-sanitize');
 const errorHandler = require('./src/middleware/error');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const helmet = require('helmet');
 const { xss } = require('express-xss-sanitizer');
 const rateLimit = require('express-rate-limit');
@@ -19,6 +21,9 @@ const connectDB = require('./src/config/db');
 //connect to the database
 connectDB();
 
+//Connect to database
+const dbUrl = process.env.MONGO_URI;
+console.log('DB url:', dbUrl);
 const app = express();
 
 //use CORS middleware
@@ -51,6 +56,25 @@ if (process.env.NODE_ENV === 'development') {
 // };
 //app.use(cors(corsOptions));
 
+const storeConfig = {
+	mongoUrl: dbUrl, //connect to MongoDB for session storage
+	touchAfter: 24 * 3600, // time period in seconds
+};
+
+const sessionConfig = {
+	secret: 'thisshouldbeabettersecret!', //secret used to sign the session ID cookie
+	resave: false, //optimise performance by only saving the session when changes have been made
+	saveUninitialized: true, //determin if save session on every request
+	store: MongoStore.create(storeConfig), //connect to MongoStore
+	cookie: {
+		//define cookie settings
+		httpOnly: true,
+		expires: Date.now() + 1000 * 60 * 60 * 24 * 7, //session cookie expires in 7 days
+		maxAge: 1000 * 60 * 60 * 24 * 7, //maximum age of session cookie 7 days
+	},
+};
+
+app.use(session(sessionConfig));
 //Body parser
 app.use(express.json());
 //Cookie parser
