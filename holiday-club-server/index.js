@@ -23,7 +23,6 @@ connectDB();
 
 //Connect to database
 const dbUrl = process.env.MONGO_URI;
-console.log('DB url:', dbUrl);
 const app = express();
 
 //use CORS middleware
