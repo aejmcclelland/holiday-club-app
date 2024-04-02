@@ -8,6 +8,7 @@ const {
 	deleteMember,
 	getChildren,
 	getChild,
+	searchMemberByName,
 } = require('../controllers/members');
 
 const Member = require('../models/Member');
@@ -20,19 +21,19 @@ const { protect, authorise } = require('../middleware/auth');
 router
 	.route('/')
 	.get(protect, authorise('admin'), advancedResults(Member), getMembers)
-	.post(protect, authorise('parent', 'admin'), createMember);
+	.post(protect, authorise('family', 'admin'), createMember);
 
 router
 	.route('/:id')
-	.get(protect, authorise('parent', 'admin'), getMember)
-	.put(protect, authorise('parent', 'admin'), updateMember)
-	.delete(protect, authorise('parent', 'admin'), deleteMember);
+	.get(protect, authorise('family', 'admin'), getMember)
+	.put(protect, authorise('family', 'admin'), updateMember)
+	.delete(protect, authorise('family', 'admin'), deleteMember);
 
 router
 	.route('/:activity/:id')
 	.get(
 		protect,
-		authorise('parent', 'admin', 'HBC', 'Sunday School', 'Connect'),
+		authorise('family', 'admin', 'HBC', 'Sunday School', 'Connect'),
 		getChild
 	);
 router
@@ -42,5 +43,8 @@ router
 		authorise('admin', 'HBC', 'Sunday School', 'Connect'),
 		getChildren
 	);
+router
+	.route('/search')
+	.get(protect, authorise('admin', 'family'), searchMemberByName);
 
 module.exports = router;

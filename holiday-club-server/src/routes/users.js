@@ -13,13 +13,33 @@ const User = require('../models/User');
 const router = express.Router({ mergeParams: true });
 
 const advancedResults = require('../middleware/advancedresults');
-const { protect, authorise } = require('../middleware/auth');
+const {
+	protect,
+	allowAccountCreation,
+	authorise,
+} = require('../middleware/auth');
+
+router.post(
+	'/',
+	createUser,
+	allowAccountCreation('parent', 'carer', 'guardian', 'grandparent')
+);
 
 router.use(protect);
 router.use(authorise('admin'));
 
-router.route('/').get(advancedResults(User), getAllUsers).post(createUser);
+router
+	.route('/')
+	.get(advancedResults(User), getAllUsers)
+	.post(
+		createUser,
+		allowAccountCreation('parent', 'carer', 'guardian', 'grandparent')
+	);
+router.route('/search').get(getUser);
 
-router.route('/:id').get(getUser).put(updateUser).delete(deleteUser);
+router
+	.route('/:id')
+	.put(updateUser)
+	.delete(protect, authorise('admin'), deleteUser);
 
 module.exports = router;

@@ -1,0 +1,56 @@
+.
+├── holiday-club-app
+│   ├── next-env.d.ts
+│   ├── postcss.config.js
+│   ├── public
+│   ├── src
+│   │   ├── api
+│   │   ├── app
+│   │   │   ├── admin
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   ├── login
+│   │   │   │   └── page.tsx
+│   │   │   └── page.tsx
+│   │   ├── components
+│   │   │   └── Navbar.tsx
+│   │   ├── styles
+│   │   └── utils
+│   └── tailwind.config.ts
+└── holiday-club-server
+    ├── data
+    ├── dbseeder.js
+    ├── index.js
+    ├── public
+    ├── src
+    │   ├── cloudinary
+    │   │   └── index.js
+    │   ├── config
+    │   │   └── db.js
+    │   ├── controllers
+    │   │   ├── auth.js
+    │   │   ├── members.js
+    │   │   ├── photos.js
+    │   │   └── users.js
+    │   ├── middleware
+    │   │   ├── advancedresults.js
+    │   │   ├── async.js
+    │   │   ├── auth.js
+    │   │   ├── checkActivityAccess.js
+    │   │   ├── error.js
+    │   │   └── roleMapper.js
+    │   ├── models
+    │   │   ├── Member.js
+    │   │   └── User.js
+    │   ├── routes
+    │   │   ├── auth.js
+    │   │   ├── members.js
+    │   │   ├── photos.js
+    │   │   └── users.js
+    │   └── utils
+    │       ├── errorResponse.js
+    │       ├── geocoder.js
+    │       └── sendEmail.js
+    └── target
+
+23 directories, 31 files

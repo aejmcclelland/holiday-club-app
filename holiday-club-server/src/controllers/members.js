@@ -27,6 +27,7 @@ exports.getMember = asyncHandler(async (req, res, next) => {
 	// Check if the requesting user is an admin or the parent/carer of the member
 	if (
 		req.user.role === 'admin' ||
+		req.user.role === 'family' ||
 		req.user.id === member.user.toString() ||
 		(member.carer && req.user.id === member.carer.toString())
 	) {
@@ -35,47 +36,34 @@ exports.getMember = asyncHandler(async (req, res, next) => {
 
 	return next(new ErrorResponse('Not authorized to access this member', 403));
 });
-//@desc     Get children
-//@route    GET /api/club/children
-//@access   Private
-exports.getChildren = asyncHandler(async (req, res, next) => {
-	// Find all members that belong to the current user (parent)
-	const children = await Member.find({ user: req.user.id });
-	console.log('children', children);
-	res.status(200).json({ success: true, data: children });
-});
 
 //@desc     Create new children
 //@route    POST /api/club
 //@access   Private/Parent
 exports.createMember = asyncHandler(async (req, res, next) => {
-	//Add user to req.body
+	// Check if the user is a family member
+	if (req.user.role !== 'family') {
+		// Allow only family members to create new children
+		return next(new ErrorResponse('Not authorized to create a member', 403));
+	}
+
+	// Add the logged-in user's ID to the member data
 	req.body.user = req.user.id;
 
-	//Check for published task
-	const existingMember = await Member.findOne({
-		user: req.user.id,
-		fullName: req.body.fullName,
-	});
-
-	//if the user is not the publisher, they cannot view
-	// if (publishedMember && req.user.role !== 'admin') {
-	// 	return next(
-	// 		new ErrorResponse(
-	// 			`The user with ID ${req.user.id} has already added this child`,
-	// 			400
-	// 		)
-	// 	);
-	// }
-	if (existingMember) {
-		return next(
-			new ErrorResponse(
-				`The user with ID ${req.user.id} has already added this child`,
-				400
-			)
-		);
+	// If an admin is creating the member and wants to link it to a user
+	if (req.user.role === 'admin' && req.body.userId) {
+		// Validate if the specified user exists
+		const existingUser = await User.findById(req.body.userId);
+		if (!existingUser) {
+			return next(new ErrorResponse('Specified user not found', 404));
+		}
+		// Add the specified user's ID to the member data
+		req.body.user = req.body.userId;
 	}
-	const member = await Member.create({ ...req.body });
+
+	// Create the member
+	const member = await Member.create(req.body);
+
 	res.status(201).json({ success: true, data: member });
 });
 
@@ -119,11 +107,14 @@ exports.updateMember = asyncHandler(async (req, res, next) => {
 //@route    DELETE /api/club/:id
 //@access   Private/Parent
 exports.deleteMember = asyncHandler(async (req, res, next) => {
-	const member = await Member.findById(req.params.id);
+	const { firstname, surname } = req.params;
+
+	// Find the member by first name and surname
+	const member = await Member.findOne({ firstname, surname });
 
 	if (!member) {
 		return next(
-			new ErrorResponse(`Task not found with id of ${req.params.id}`, 404)
+			new ErrorResponse(`Member not found with id of ${req.params.id}`, 404)
 		);
 	}
 
@@ -135,13 +126,13 @@ exports.deleteMember = asyncHandler(async (req, res, next) => {
 	) {
 		return next(
 			new ErrorResponse(
-				`User ${req.user.id} is not authorised to delete this task`,
+				`User ${req.user.id} is not authorised to delete this member`,
 				401
 			)
 		);
 	}
 
-	task.deleteOne();
+	await member.deleteOne();
 
 	res.status(200).json({ success: true, data: {} });
 });
@@ -160,7 +151,7 @@ exports.getChild = asyncHandler(async (req, res, next) => {
 	// Check if the user has permission to access this route
 	if (
 		req.user.role === 'admin' ||
-		req.user.role === 'parent' ||
+		req.user.role === 'family' ||
 		(req.user.role === 'leader' && req.user.activity === req.params.activity)
 	) {
 		// Check if the retrieved member's activity matches the requested activity
@@ -187,7 +178,7 @@ exports.getChildren = asyncHandler(async (req, res, next) => {
 		// Check if the user has permission to access this route
 		if (
 			req.user.role === 'admin' ||
-			req.user.role === 'parent' ||
+			req.user.role === 'family' ||
 			(req.user.role === 'leader' && req.user.activity === req.params.activity)
 		) {
 			// Find all members that belong to the requested activity
@@ -213,6 +204,46 @@ exports.getChildren = asyncHandler(async (req, res, next) => {
 	}
 });
 
+//@desc     Search for a member by name
+//@route    GET /api/club/search?firstname=:firstname&surname=:surname
+//@access   Private (admin or family)
+exports.searchMemberByName = asyncHandler(async (req, res, next) => {
+	const { firstname, surname } = req.query;
+	const searchSlug = slugify(`${firstname} ${surname}`, { lower: true });
+
+	// Perform search based on first name and surname
+	const members = await Member.find({ slug: searchSlug });
+
+	if (!members || members.length === 0) {
+		return next(
+			new ErrorResponse(
+				`No member found with the name ${firstname} ${surname}`,
+				404
+			)
+		);
+	}
+
+	// Check authorization
+	const authorisedMembers = members.filter((member) => {
+		// Check if user is admin or family
+		if (req.user.role === 'admin' || req.user.role === 'family') {
+			return true;
+		}
+		// Check if user is parent of the member
+		return req.user.id === member.user.toString();
+	});
+
+	if (authorisedMembers.length === 0) {
+		return next(
+			new ErrorResponse(
+				'Not authorized to access any members with the given name',
+				403
+			)
+		);
+	}
+
+	res.status(200).json({ success: true, data: authorisedMembers });
+});
 //@desc     Update task
 //@route    PUT /api/club/:id/photo
 //@access   Private
