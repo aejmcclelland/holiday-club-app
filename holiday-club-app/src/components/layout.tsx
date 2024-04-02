@@ -8,9 +8,13 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
     return (
-        <div>
+        <div className="bg-white min-h-screen">
+            <div className="text-gray-900">
             <Navigation />
+            <div className='container mx-auto p-4'> {/* Add padding to the layout */}
             {children}
+            </div>
+        </div>
         </div>
     );
 };
