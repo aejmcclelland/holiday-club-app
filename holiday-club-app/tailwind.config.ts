@@ -15,6 +15,9 @@ const config: Config = {
 			},
 		},
 	},
+	daisyui: {
+		themes: ['fantasy'], // Enable the acid theme
+	},
 	plugins: [require('daisyui')],
 };
 export default config;
